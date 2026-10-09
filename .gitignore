@@ -1,0 +1,20 @@
+# Never commit device data, keys or vendor binaries
+stage/
+manifest.tsv
+*.log
+env-backup/
+env-now/
+*.bin
+*.pem
+*_key
+*_key.pub
+cc2_*
+*.zip
+*.zip.sig
+*.swu
+rootfs/
+squashfs-root/
+uart_inbox.txt
+envdump*_raw.txt
+env_patch_cmds.txt
+.DS_Store

@@ -1,0 +1,30 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+/etc/init_dir.sh
+
+# --- CC2 SSH (installed via U-Boot ext4write into /overlay/upper/etc) ---
+inst() { [ -f "$1" ] || return 0; mkdir -p "$(dirname "$2")"; cmp -s "$1" "$2" 2>/dev/null || cp "$1" "$2"; chmod "$3" "$2"; }
+inst /etc/cc2ssh-sshd            /usr/sbin/sshd                       0755
+inst /etc/cc2ssh-sftp-server     /usr/lib/sftp-server                 0755
+inst /etc/cc2ssh-sshd.init       /etc/init.d/sshd                     0755
+inst /etc/cc2ssh-sshd_config     /etc/ssh/sshd_config                 0644
+inst /etc/cc2ssh-keep            /lib/upgrade/keep.d/openssh-server   0644
+for t in rsa ecdsa ed25519; do
+    inst /etc/cc2ssh-host_${t}_key     /etc/ssh/ssh_host_${t}_key     0600
+    inst /etc/cc2ssh-host_${t}_key.pub /etc/ssh/ssh_host_${t}_key.pub 0644
+done
+if [ -f /etc/cc2ssh-authorized_keys ]; then
+    home=$(awk -F: '$1=="root"{print $6}' /etc/passwd); [ -n "$home" ] || home=/root
+    inst /etc/cc2ssh-authorized_keys "$home/.ssh/authorized_keys" 0600
+    chmod 0700 "$home/.ssh"
+fi
+grep -q '^sshd:' /etc/group || echo 'sshd:x:22:sshd' >> /etc/group
+mkdir -m 0700 -p /var/empty
+if [ -x /etc/init.d/sshd ] && ! pidof sshd >/dev/null 2>&1; then
+    /etc/init.d/sshd start
+fi
+echo "cc2ssh: rc.local done, sshd pid=$(pidof sshd)" > /dev/console
+# --- end CC2 SSH ---
+
+/etc/time_sync.sh
+exit 0
